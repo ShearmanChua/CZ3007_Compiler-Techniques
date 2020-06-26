@@ -1,0 +1,211 @@
+// package the generated Java class lives in; no need to change this
+%package "parser";
+
+// name of the generated Java class; no need to change this
+%class "Parser";
+
+// no need to change this either
+%embed {:
+	// turn off automated error recovery
+	@Override
+	protected void recoverFromError(Symbol token, TokenStream in) throws java.io.IOException, Exception {
+		super.recoverFromError(new Symbol(0), in);
+	}
+:};
+
+// the list of all terminals; no need to change this
+%terminals MODULE, INT, VOID, IF, ELSE, WHILE, RETURN, BREAK, BOOLEAN, PUBLIC, TRUE, FALSE,
+           INT_LITERAL, STRING_LITERAL, ID, TYPE, IMPORT,
+           PLUS, MINUS, TIMES, DIV, MOD, EQEQ, NEQ, LEQ, GEQ, LT, GT,
+           LBRACKET, RPAREN, COMMA, RCURLY, LCURLY, SEMICOLON, RBRACKET, LPAREN, EQL;
+           
+// declaration of start symbol; no need to change this
+%goal Module;
+
+/* TODO: Flesh out the rule for Module, and add rules for other nonterminals. Here is an example
+         of a rule you may want to add:
+         
+   Accessibility = PUBLIC
+		  |
+		  ;
+  */
+
+Module = MODULE ID LCURLY Imports Declarations RCURLY;
+
+Imports = Import Imports
+		| 
+		;
+
+Import = IMPORT ID SEMICOLON;
+
+Declarations = Declaration Declarations
+			 | 
+			 ;
+
+Declaration = FunctionDecl
+			| FieldDecl
+			| TypeDecl
+			;
+			
+FunctionDecl = Accessibility TypeName ID LPAREN ParameterList RPAREN LCURLY StatementList RCURLY ;
+
+FieldDecl = Accessibility TypeName ID SEMICOLON ;
+
+TypeDecl = Accessibility TYPE ID EQL STRING_LITERAL SEMICOLON ;
+			
+Accessibility = PUBLIC
+		  |
+		  ;
+		  
+TypeName = Primitive
+		 | Array
+		 | ID
+		 ;
+ 
+Primitive = VOID
+		  | BOOLEAN
+		  | INT
+		  ;
+
+Array = Array LBRACKET RBRACKET
+	  | Primitive LBRACKET RBRACKET
+	  | ID LBRACKET RBRACKET
+	  ;
+	  
+ParameterList = Parameter ParameterListTail
+			  | 
+	          ; 
+	          
+ParameterListTail = COMMA Parameter ParameterListTail
+				  |
+				  ;
+			
+Parameter = TypeName ID;
+	
+StatementList = Statement StatementListTail
+	          | 
+			  ;
+			  
+StatementListTail = Statement StatementListTail
+	              | 
+			      ; 
+				  
+Statement = LocalVarDecl
+		  | StatementBlock
+		  | IfStatement
+		  | WhileStatement
+		  | BreakStatement
+		  | ReturnStatement
+		  | ExprStatement
+	 	  ;
+
+LocalVarDecl = TypeName ID SEMICOLON ;
+
+StatementBlock = LCURLY StatementList RCURLY ;
+
+IfStatement = IF LPAREN Expression RPAREN Statement OptionalElseStatement ;
+
+OptionalElseStatement = ELSE Statement
+					  |
+					  ;
+
+WhileStatement = WHILE LPAREN Expression RPAREN Statement ;
+
+BreakStatement = BREAK SEMICOLON ;
+
+ReturnStatement = RETURN OptionalExpr SEMICOLON ;
+
+OptionalExpr = Expression
+			 | 
+			 ;
+			
+ExprStatement = Expression SEMICOLON;
+
+Expression = RHSExpr
+		   | Assignment
+		   ;
+			
+Assignment = LHSExpr EQL Expression;
+
+LHSExpr = ID
+	    | ArrayAccess
+		;
+		
+ArrayAccess = ID LBRACKET Expression RBRACKET
+            | ArrayAccess LBRACKET Expression RBRACKET 
+            ;
+
+RHSExpr = ArithmeticExpr OptionalArithmeticExpr;
+
+OptionalArithmeticExpr = ComparisonOp ArithmeticExpr
+					   | 
+					   ;
+						
+ComparisonOp = EQEQ
+			 | NEQ
+			 | LT
+			 | LEQ
+			 | GT
+			 | GEQ
+			 ;
+
+ArithmeticExpr = Term ArithmeticExprTail;
+ArithmeticExprTail = AdditiveOp	Term ArithmeticExprTail
+				   |
+				   ;			
+
+AdditiveOp = PLUS
+		   | MINUS
+		   ;				
+
+Term = Factor TermTail;
+	
+TermTail = MultiplicativeOp Factor TermTail
+		 |
+		 ;
+	
+MultiplicativeOp = TIMES
+				| DIV
+				| MOD
+				;
+				
+Factor = MINUS Factor
+		| PrimaryExpr
+		;
+		
+PrimaryExpr = INT_LITERAL
+		    | STRING_LITERAL
+		    | FunctionCall
+		    | ArrayExpr
+		    | BooleanLiteral
+		    | LHSExpr
+		    | ParenthesisedExpr
+		    ;
+			
+FunctionCall = ID LPAREN ExpressionList RPAREN;
+
+ExpressionList = Expression ExpressionListTail
+			   | 
+			   ;
+				
+ExpressionListTail = COMMA Expression ExpressionListTail
+				   | 
+				   ;
+				
+				
+ArrayExpr = LBRACKET ExpressionListNonEmpty RBRACKET;
+
+ExpressionListNonEmpty = Expression ExpressionListNonEmptyTail
+						;
+
+ExpressionListNonEmptyTail = COMMA Expression ExpressionListNonEmptyTail
+						   |
+						   ;
+
+BooleanLiteral = TRUE
+			   | FALSE
+			   ;
+				
+ParenthesisedExpr = LPAREN Expression RPAREN;
+
+/**/
